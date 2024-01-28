@@ -30,8 +30,18 @@ def prophet_prediction(periodo_previsao):
     return m, forecast, forecast_resumo
 
 # Previsão com Modelo 1
-def modelo_1_prediction(periodo_previsao):
-    st.text('Em construção...')
+def sarimax_prediction(periodo_previsao):
+    # Carregando o modelo
+    m = joblib.load('modelo/sarimax.joblib')
+
+    # Prevendo de acordo com o filtro
+    sarima_results= m.fit()
+    forecast_sarimax = sarima_results.get_forecast(steps=periodo_previsao)
+    forecast_medio = forecast_sarimax.predicted_mean
+
+    st.subheader('Previsão')
+    st.dataframe(pd.DataFrame(forecast_medio.round(2).tail()).rename(columns=
+                                                            {"predicted_mean":"Petróleo Brent (U$)"}))
 
 
 ###### Gráficos e Métricas ######
@@ -44,7 +54,7 @@ def plot_raw_data():
 def prophet_plot_table(m, forecast, forecast_resumo, periodo_previsao):
     # Mostrando os últimos 5 dias de previsão e plotando o gráfico com a previsão e dados do IPEA
     st.subheader('Previsão')
-    st.dataframe(forecast_resumo.tail())
+    st.dataframe(forecast_resumo.round(2).tail())
         
     st.subheader(f'Gráfico de previsão em {periodo_previsao} dias')
     plot_prev_prophet = plot_plotly(m, forecast)
@@ -56,10 +66,10 @@ def prophet_plot_table(m, forecast, forecast_resumo, periodo_previsao):
     
 st.sidebar.title('Parâmetros do Modelo')
 with st.sidebar.expander('Período de Previsão', True):
-    periodo = st.slider('Selecione o período de previsão:', 1, 365, 7)
+    periodo = st.slider('Selecione o período de previsão:', 1, 30, 7)
 
 with st.sidebar.expander('Modelo de Machine Learning', True):
-    input_modelo = st.selectbox('Selecione o modelo que deseja utilizar:', ['Escolha um modelo','Modelo_1', 'Prophet'], 0)
+    input_modelo = st.selectbox('Selecione o modelo que deseja utilizar:', ['Escolha um modelo','SARIMAX', 'Prophet'], 0)
 
 rodar_modelo = st.sidebar.button(label="Rodar Modelo")
 
@@ -87,7 +97,7 @@ if(input_modelo == "Prophet" and rodar_modelo):
         prophet_plot_table(m, forecast, forecast_resumo, periodo)
     with aba2:
         st.write("Em construção")
-if(input_modelo == "Modelo_1" and rodar_modelo):
-    st.header("Modelo 1", divider="gray")
-    modelo_1_prediction(periodo)
+if(input_modelo == "SARIMAX" and rodar_modelo):
+    st.header("SARIMAX", divider="gray")
+    sarimax_prediction(periodo)
     
